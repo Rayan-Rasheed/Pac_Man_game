@@ -5,22 +5,39 @@
 #include <conio.h>
 #include <cmath>
 using namespace std;
+//****************************loading maze from file****************************************************
 char header[6][42];
-
+void load();
 char mazeA[24][70];
 void maze_show();
+//*******************************************************************************************************************
+//________________________calculate score_________________________________________________________
 void calculate_score();
-void load();
+void printScore();
+//___________________________________________________________________________________________________
+//*************************to avoid flickering**************************************
+void gotoxy(int x, int y);
+//__________________________________________________________________________________________
+//*****************************lives system*****************************
+void lives_counter();
+void lives_show();
+///__________________________________________________________________________-_____
+//*********************************energizer system***********************************
+int energy = 1;
+void energy_loss();
+void energyzer();
+void energizer_show();
+
+//-------------------------------------------------------------------------------------
 void movepack_man();
 void movePacmanLeft();
 void movePacmanRight();
 void movePacmanUp();
 void movePacmanDown();
-void gotoxy(int x, int y);
-// single ghost move up
+//************************************ single ghost move up
 void ghost1_moveup();
 void ghost_move();
-void printScore();
+
 //*************
 int ghostDirection();
 bool ghostMovementRand();
@@ -28,15 +45,13 @@ bool ghostMovementRand();
 bool move_down = false;
 bool move_up = true;
 // lives*******
-void lives_counter();
-void lives_show();
 
 int pacmanX = 9;  // X Coordinate of Pacman
 int pacmanY = 31; // Y Coordinate of Pacman
 int score = 0;
 
-int ghostX_2 = 3; // chase
-int ghostY_2 = 3;
+int ghostX_2 = 1; // chase
+int ghostY_2 = 23;
 
 int ghostX = 19; // random movement
 int ghostY = 25;
@@ -75,6 +90,8 @@ bool gameRunning_chasing = true;
 bool gameRunning = true;
 int lives = 3;
 int turn = 0;
+
+//******************loading header***************************************************************
 void show_header()
 {
     for (int i = 0; i < 6; i++)
@@ -104,6 +121,7 @@ void pac_header()
     f.close();
     show_header();
 }
+//*************************************************************************************
 main()
 {
 
@@ -116,14 +134,17 @@ main()
     gotoxy(pacmanY, pacmanX);
     cout << "P";
 
-    while (lives > 0)
+    while (lives > 0 || energy > 0)
     {
         Sleep(100);
 
         gotoxy(pacmanY, pacmanX);
 
         printScore();
+
         lives_show();
+
+        energizer_show();
         if (gameRunning == false || gameRunning_vertical == false || gameRunning_horizontol == false || gameRunning_chasing == false)
         {
             lives_counter();
@@ -170,7 +191,7 @@ void gotoxy(int x, int y) // Function Definition
 void load()
 {
     fstream file;
-    file.open("data.txt", ios::in);
+    file.open("pac_data.txt", ios::in);
     string line;
     for (int i = 0; i < 24; i++)
     {
@@ -182,8 +203,12 @@ void load()
     }
     file.close();
 }
+
 void printScore()
 {
+    gotoxy(75, 5);
+    cout << "_______________________" << endl;
+
     gotoxy(74, 3);
     cout << " Total Score: " << score << endl
          << endl;
@@ -210,7 +235,10 @@ void calculate_score()
 }
 void lives_counter()
 {
-    lives--;
+    if (energy < 1)
+    {
+        lives--;
+    }
 }
 void lives_show()
 {
@@ -222,9 +250,26 @@ void lives_show()
         cout << "Game Over!";
     }
 }
+void energyzer()
+{
+    // 30 iteration ghost cant kill
+    energy = energy + 30;
+}
+void energy_loss()
+{
+    // ghost attack decrease energy 30 iteration does kill pacman
+
+    energy--;
+}
+void energizer_show()
+{
+    gotoxy(75, 7);
+
+    cout << "Energy level:" << energy;
+}
 void movePacmanLeft() // Function call to move Pacman towards lef
 {
-    if ((mazeA[pacmanX][pacmanY - 1] == ' ') || mazeA[pacmanX][pacmanY - 1] == '.')
+    if ((mazeA[pacmanX][pacmanY - 1] == ' ') || mazeA[pacmanX][pacmanY - 1] == '.' || mazeA[pacmanX][pacmanY - 1] == '@')
     {
         mazeA[pacmanX][pacmanY] = ' ';
 
@@ -234,6 +279,10 @@ void movePacmanLeft() // Function call to move Pacman towards lef
         {
             calculate_score();
         }
+        if (mazeA[pacmanX][pacmanY - 1] == '@')
+        {
+            energyzer();
+        }
         mazeA[pacmanX][pacmanY - 1] = 'P';
         pacmanY = pacmanY - 1;
         gotoxy(pacmanY, pacmanX);
@@ -242,7 +291,7 @@ void movePacmanLeft() // Function call to move Pacman towards lef
 }
 void movePacmanRight()
 {
-    if ((mazeA[pacmanX][pacmanY + 1] == ' ') || mazeA[pacmanX][pacmanY + 1] == '.')
+    if ((mazeA[pacmanX][pacmanY + 1] == ' ') || mazeA[pacmanX][pacmanY + 1] == '.' || mazeA[pacmanX][pacmanY + 1] == '@')
     {
         mazeA[pacmanX][pacmanY] = ' ';
         gotoxy(pacmanY, pacmanX);
@@ -250,6 +299,10 @@ void movePacmanRight()
         if (mazeA[pacmanX][pacmanY + 1] == '.')
         {
             calculate_score();
+        }
+        if (mazeA[pacmanX][pacmanY + 1] == '@')
+        {
+            energyzer();
         }
         mazeA[pacmanX][pacmanY + 1] = 'P';
         pacmanY = pacmanY + 1;
@@ -260,7 +313,7 @@ void movePacmanRight()
 
 void movePacmanUp()
 {
-    if ((mazeA[pacmanX - 1][pacmanY] == ' ') || mazeA[pacmanX - 1][pacmanY] == '.')
+    if ((mazeA[pacmanX - 1][pacmanY] == ' ') || mazeA[pacmanX - 1][pacmanY] == '.' || mazeA[pacmanX - 1][pacmanY] == '@')
     {
         mazeA[pacmanX][pacmanY] = ' ';
         gotoxy(pacmanY, pacmanX);
@@ -268,6 +321,10 @@ void movePacmanUp()
         if (mazeA[pacmanX - 1][pacmanY] == '.')
         {
             calculate_score();
+        }
+        if (mazeA[pacmanX - 1][pacmanY] == '@')
+        {
+            energyzer();
         }
         mazeA[pacmanX - 1][pacmanY] = 'P';
         pacmanX = pacmanX - 1;
@@ -278,7 +335,7 @@ void movePacmanUp()
 void movePacmanDown()
 {
 
-    if ((mazeA[pacmanX + 1][pacmanY] == ' ') || mazeA[pacmanX + 1][pacmanY] == '.')
+    if ((mazeA[pacmanX + 1][pacmanY] == ' ') || mazeA[pacmanX + 1][pacmanY] == '.' || mazeA[pacmanX + 1][pacmanY] == '@')
     {
         mazeA[pacmanX][pacmanY] = ' ';
         gotoxy(pacmanY, pacmanX);
@@ -288,12 +345,17 @@ void movePacmanDown()
         {
             calculate_score();
         }
+        if (mazeA[pacmanX + 1][pacmanY] == '@')
+        {
+            energyzer();
+        }
         mazeA[pacmanX + 1][pacmanY] = 'P';
         pacmanX = pacmanX + 1;
         gotoxy(pacmanY, pacmanX);
         cout << "P";
     }
 }
+
 //______________________________________packman movement end____________________________________________________________________________________________
 //)**********************************Random movement of ghost"R"**************************************************
 int ghostDirection()
@@ -317,6 +379,8 @@ bool ghostMovementRand()
             previousItem = mazeA[ghostX][ghostY];
             if (previousItem == 'P')
             {
+                previousItem = ' ';
+                energy_loss();
                 return 0;
             }
             mazeA[ghostX][ghostY] = 'R';
@@ -336,6 +400,8 @@ bool ghostMovementRand()
             previousItem = mazeA[ghostX][ghostY];
             if (previousItem == 'P')
             {
+                previousItem = ' ';
+                energy_loss();
                 return 0;
             }
             mazeA[ghostX][ghostY] = 'R';
@@ -355,7 +421,8 @@ bool ghostMovementRand()
             previousItem = mazeA[ghostX][ghostY];
             if (previousItem == 'P')
             {
-
+                previousItem = ' ';
+                energy_loss();
                 return 0;
             }
             mazeA[ghostX][ghostY] = 'R';
@@ -375,6 +442,8 @@ bool ghostMovementRand()
             previousItem = mazeA[ghostX][ghostY];
             if (previousItem == 'P')
             {
+                previousItem = ' ';
+                energy_loss();
                 return 0;
             }
             mazeA[ghostX][ghostY] = 'R';
@@ -423,6 +492,8 @@ bool move_up_1()
 
         return true;
     }
+    previousItem_Vertical = ' ';
+    energy_loss();
 }
 bool move_down_1()
 {
@@ -447,6 +518,8 @@ bool move_down_1()
     {
         return true;
     }
+    previousItem_Vertical = ' ';
+    energy_loss();
 }
 //______________________________________end vertically____________________________________________________
 //**************************************moving horizontol***************************************************************
@@ -490,6 +563,8 @@ bool move_right_3()
 
         return true;
     }
+    previousItem_horizontol = ' ';
+    energy_loss();
 }
 bool move_left_3()
 {
@@ -516,6 +591,8 @@ bool move_left_3()
 
         return true;
     }
+    previousItem_horizontol = ' ';
+    energy_loss();
 }
 //***************************************************mvoing horizontol end****************************************
 bool ghost_chase()
@@ -540,6 +617,8 @@ bool ghost_chase()
             previousItem_chase = mazeA[ghostX_2][ghostY_2];
             if (previousItem_chase == 'P')
             {
+                previousItem_chase = ' ';
+                energy_loss();
                 return false;
             }
             mazeA[ghostX_2][ghostY_2] = 'G';
@@ -561,6 +640,8 @@ bool ghost_chase()
             previousItem_chase = mazeA[ghostX_2][ghostY_2];
             if (previousItem_chase == 'P')
             {
+                previousItem_chase = ' ';
+                energy_loss();
                 return false;
             }
             mazeA[ghostX_2][ghostY_2] = 'G';
@@ -580,6 +661,8 @@ bool ghost_chase()
             previousItem_chase = mazeA[ghostX_2][ghostY_2];
             if (previousItem_chase == 'P')
             {
+                previousItem_chase = ' ';
+                energy_loss();
                 return false;
             }
             mazeA[ghostX_2][ghostY_2] = 'G';
@@ -600,6 +683,8 @@ bool ghost_chase()
             previousItem_chase = mazeA[ghostX_2][ghostY_2];
             if (previousItem_chase == 'P')
             {
+                previousItem_chase = ' ';
+                energy_loss();
                 return false;
             }
             mazeA[ghostX_2][ghostY_2] = 'G';
